@@ -4,7 +4,6 @@ use std::{
     thread,
     time::Duration,
 };
-
 use clap::Parser;
 use log::{error, info, warn};
 use rosc::{OscMessage, OscPacket, OscType, address::verify_address, encoder};
@@ -52,12 +51,9 @@ fn main() {
     let args = Cli::parse();
 
     // validate address
-    match verify_address(&args.address) {
-        Ok(_) => (),
-        Err(e) => {
-            error!("address seems to be invalid: {}", e);
-            std::process::exit(1);
-        }
+    if let Err(e) = verify_address(&args.address) {
+        error!("address seems to be invalid: {}", e);
+        std::process::exit(1);
     }
 
     let to_addr = match SocketAddrV4::from_str(format!("127.0.0.1:{}", &args.port).as_str()) {
@@ -89,11 +85,8 @@ fn main() {
 
     for i in 0..args.count {
         info!("sending message to {} via port {}", args.address, args.port);
-        match sock.send_to(&buffer, to_addr) {
-            Err(e) => {
-                warn!("failed to send message: {}", e);
-            }
-            _ => {}
+        if let Err(e) = sock.send_to(&buffer, to_addr) {
+            warn!("failed to send message: {}", e);
         }
 
         if i + 1 < args.count {
@@ -101,7 +94,6 @@ fn main() {
         }
     }
 }
-
 
 /// Create OscType vector based on cli arguments
 fn make_args(args: &Cli) -> Vec<OscType> {
